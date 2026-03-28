@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RocketMind Coach | Universal Rocket League Training</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Inter:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-grid"></div>
+    <header class="hero card-glow">
+      <p class="eyebrow">Universal RL Coach</p>
+      <h1>RocketMind Coach</h1>
+      <p class="subtitle">
+        A tough, all-in-one Rocket League coaching desk that builds your skill path,
+        reviews gameplay step by step, and keeps your grind focused until Champ.
+      </p>
+      <div class="hero-tags">
+        <span>Replay Reviews</span>
+        <span>Mechanics Progression</span>
+        <span>Game Sense Drills</span>
+        <span>Mental Stack Control</span>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel card-glow">
+        <h2>Build Your Coaching Plan</h2>
+        <form id="coach-form">
+          <label>
+            Current Rank
+            <select id="rank" required>
+              <option value="">Select rank</option>
+              <option>Bronze</option>
+              <option>Silver</option>
+              <option>Gold</option>
+              <option>Platinum</option>
+              <option>Diamond</option>
+              <option>Champion</option>
+              <option>Grand Champion</option>
+              <option>Supersonic Legend</option>
+            </select>
+          </label>
+
+          <label>
+            Main Playlist
+            <select id="playlist" required>
+              <option value="">Select playlist</option>
+              <option>1v1 Duel</option>
+              <option>2v2 Doubles</option>
+              <option>3v3 Standard</option>
+            </select>
+          </label>
+
+          <label>
+            Hours per week available
+            <input id="hours" type="number" min="1" max="40" value="8" required />
+          </label>
+
+          <label>
+            Biggest Weakness
+            <select id="weakness" required>
+              <option value="">Select weakness</option>
+              <option>Consistency / Basic Touches</option>
+              <option>Car Control / Recoveries</option>
+              <option>Speed / Fast Aerials</option>
+              <option>Mechanics / Advanced Plays</option>
+              <option>Positioning / Rotations</option>
+              <option>Decision-Making Under Pressure</option>
+              <option>Mental / Tilt / Confidence</option>
+            </select>
+          </label>
+
+          <label>
+            Replay notes (paste key moments)
+            <textarea
+              id="replay-notes"
+              rows="5"
+              placeholder="Example: 2:45 overcommitted on left wall, 1:30 missed boost route and got demoed, 0:40 panic clear to middle..."
+            ></textarea>
+          </label>
+
+          <button type="submit">Generate My Champ Route</button>
+        </form>
+      </section>
+
+      <section class="panel card-glow output-panel">
+        <h2>Coach Output</h2>
+        <div id="coach-output" class="output empty">
+          Fill the form and generate your personalized step-by-step program.
+        </div>
+      </section>
+
+      <section class="panel card-glow">
+        <h2>Instant Coaching Prompts</h2>
+        <div class="prompt-grid" id="quick-prompts"></div>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        Built for focused improvement. Track your reps, clip your mistakes, iterate weekly.
+      </p>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
