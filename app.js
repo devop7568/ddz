@@ -2,6 +2,13 @@ const form = document.getElementById('coach-form');
 const output = document.getElementById('coach-output');
 const quickPrompts = document.getElementById('quick-prompts');
 
+const openChatBtn = document.getElementById('open-chat');
+const chatPanel = document.getElementById('coach-chat-panel');
+const chatLog = document.getElementById('chat-log');
+const chatForm = document.getElementById('chat-form');
+const chatInput = document.getElementById('chat-input');
+
+
 const rankOrder = [
   'Bronze',
   'Silver',
@@ -179,6 +186,55 @@ function renderPlan(plan) {
   });
 }
 
+
+function addChatBubble(role, text) {
+  const bubble = document.createElement('div');
+  bubble.className = `chat-bubble ${role}`;
+  bubble.textContent = text;
+  chatLog.appendChild(bubble);
+  chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+function detectTopic(prompt) {
+  const lower = prompt.toLowerCase();
+  if (lower.includes('kickoff')) return 'kickoff';
+  if (lower.includes('aerial') || lower.includes('air dribble') || lower.includes('flip reset')) return 'aerial';
+  if (lower.includes('rotate') || lower.includes('rotation') || lower.includes('double commit')) return 'rotation';
+  if (lower.includes('tilt') || lower.includes('mental') || lower.includes('confidence')) return 'mental';
+  if (lower.includes('defend') || lower.includes('shadow')) return 'defense';
+  if (lower.includes('shoot') || lower.includes('shot')) return 'shooting';
+  return 'general';
+}
+
+function coachReply(prompt) {
+  const topic = detectTopic(prompt);
+  const map = {
+    kickoff:
+      'Kickoff fix: 1) hit center of ball with stable approach, 2) recover instantly with powerslide, 3) grab nearest pad and decide challenge/support in under 1 second. Run 20 reps before queue.',
+    aerial:
+      'For advanced aerial mechanics: split it into setup touch, takeoff line, and first contact quality. Train each piece for 5 minutes, then combine. In ranked, only attempt when you have boost + last-man safety.',
+    rotation:
+      'Anti-double-commit rule: if you cannot beat both teammate and opponent to the ball, rotate out immediately. Keep one car-length wider spacing and verbally call your role: first, second, or third.',
+    mental:
+      'When tilt starts: play one low-risk game plan for the next 3 minutes (safe clears, back-post, no hero plays). After match, write one controllable mistake and one next-match objective.',
+    defense:
+      'Defense checklist: protect net first, challenge when support exists, and clear to side wall—not middle. Pause replay 3 seconds before each conceded goal and identify the first incorrect position.',
+    shooting:
+      'To score more: aim before jump, strike through center-to-top half for power, and follow your shot only when teammate cover exists. Do 30 controlled shot reps with called targets.',
+    general:
+      'Use this live loop: identify one mistake pattern, run a 10-minute drill for it, then test in a 3-game block. Send me the exact situation and I will break it into simple steps.'
+  };
+
+  return `${map[topic]}\n\nIf you want, ask with your rank + playlist + one replay timestamp and I will tailor it.`;
+}
+
+function seedChat() {
+  addChatBubble(
+    'coach',
+    'Yo! I am your RocketMind live coach. Ask me anything and I will give direct steps to improve fast.'
+  );
+}
+
 form.addEventListener('submit', (event) => {
   event.preventDefault();
 
@@ -194,4 +250,28 @@ form.addEventListener('submit', (event) => {
   renderPlan(plan);
 });
 
+
+vopenChatBtn.addEventListener('click', () => {
+  chatPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  chatInput.focus();
+});
+
+chatForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  const prompt = chatInput.value.trim();
+  if (!prompt) return;
+
+  addChatBubble('user', prompt);
+
+  window.setTimeout(() => {
+    addChatBubble('coach', coachReply(prompt));
+  }, 200);
+
+  chatInput.value = '';
+});
+
 createQuickPrompts();
+seedChat();
+
+createQuickPrompts();
+
