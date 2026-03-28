@@ -46,6 +46,7 @@ body {
   box-shadow: 0 0 0 1px rgb(23 209 255 / 0.08), 0 16px 40px rgb(0 0 0 / 0.45);
 }
 
+
 .left-chat-btn {
   position: fixed;
   left: 0.8rem;
@@ -91,8 +92,10 @@ h1 {
   margin-bottom: 0.6rem;
 }
 
+
 .subtitle,
 .chat-subtitle {
+.subtitle {
   margin: 0;
   color: var(--muted);
   line-height: 1.5;
@@ -230,6 +233,7 @@ button:hover {
   border-color: rgb(53 242 162 / 0.65);
 }
 
+
 .chat-panel {
   scroll-margin-top: 1rem;
 }
@@ -281,6 +285,7 @@ button:hover {
   border: 0;
 }
 
+
 footer {
   max-width: 1150px;
   margin: 1rem auto 0;
@@ -294,6 +299,7 @@ footer {
   }
 
   .output-panel,
+
   .layout > :last-child,
   .chat-panel {
     grid-column: span 2;
@@ -314,3 +320,8 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+  .layout > :last-child {
+    grid-column: span 2;
+  }
+}
+

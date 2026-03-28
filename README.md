@@ -8,7 +8,9 @@ RocketMind Coach is a fast, single-page web app designed as a universal Rocket L
 - Organizes weekly practice split across mechanics, replay review, and ranked blocks.
 - Adapts suggestions to rank, playlist, and your biggest weakness.
 - Turns replay notes into a practical review SOP (standard operating procedure).
+
 - Includes a left-side **Coach Chat** button that jumps to a live coaching chat panel for quick tips and answers.
+
 - Includes quick coaching prompts for deeper AI-assisted analysis.
 
 ## Run locally

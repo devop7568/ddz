@@ -1,11 +1,13 @@
 const form = document.getElementById('coach-form');
 const output = document.getElementById('coach-output');
 const quickPrompts = document.getElementById('quick-prompts');
+
 const openChatBtn = document.getElementById('open-chat');
 const chatPanel = document.getElementById('coach-chat-panel');
 const chatLog = document.getElementById('chat-log');
 const chatForm = document.getElementById('chat-form');
 const chatInput = document.getElementById('chat-input');
+
 
 const rankOrder = [
   'Bronze',
@@ -184,6 +186,7 @@ function renderPlan(plan) {
   });
 }
 
+
 function addChatBubble(role, text) {
   const bubble = document.createElement('div');
   bubble.className = `chat-bubble ${role}`;
@@ -247,7 +250,8 @@ form.addEventListener('submit', (event) => {
   renderPlan(plan);
 });
 
-openChatBtn.addEventListener('click', () => {
+
+vopenChatBtn.addEventListener('click', () => {
   chatPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
   chatInput.focus();
 });
@@ -268,3 +272,6 @@ chatForm.addEventListener('submit', (event) => {
 
 createQuickPrompts();
 seedChat();
+
+createQuickPrompts();
+
