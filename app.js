@@ -1,277 +1,286 @@
-const form = document.getElementById('coach-form');
-const output = document.getElementById('coach-output');
-const quickPrompts = document.getElementById('quick-prompts');
+const promptInput = document.getElementById('prompt-input');
+const scanBtn = document.getElementById('scan-btn');
+const scanResult = document.getElementById('scan-result');
+const signalList = document.getElementById('signal-list');
 
-const openChatBtn = document.getElementById('open-chat');
-const chatPanel = document.getElementById('coach-chat-panel');
-const chatLog = document.getElementById('chat-log');
-const chatForm = document.getElementById('chat-form');
-const chatInput = document.getElementById('chat-input');
-
-
-const rankOrder = [
-  'Bronze',
-  'Silver',
-  'Gold',
-  'Platinum',
-  'Diamond',
-  'Champion',
-  'Grand Champion',
-  'Supersonic Legend'
+const highRiskPatterns = [
+  /ignore (all|previous) instructions/i,
+  /reveal (your|the) (system|hidden) prompt/i,
+  /bypass|jailbreak|override|developer mode/i,
+  /act as root|root access/i,
+  /exfiltrate|export secrets|api key/i
 ];
 
-const weaknessLibrary = {
-  'Consistency / Basic Touches': [
-    '15 mins: free play catches, powerslide turns, and soft first touches every session.',
-    '20 mins: shooting pack with target quality > power. Call your shot corner before touching ball.',
-    'Rule: no mindless booming. Touch with intention: pass, clear side, or control.'
-  ],
-  'Car Control / Recoveries': [
-    '10 mins rings/dribble map equivalent + half-flip, wavedash, speed-flip reps in free play.',
-    'In matches: land on wheels every play. If awkward, abort challenge and recover first.',
-    'Post-game tag every goal against that started from a bad recovery.'
-  ],
-  'Speed / Fast Aerials': [
-    'Warm-up: 50 fast aerial repetitions with clean boost pathing.',
-    'In replay: pause at each challenge and ask “could I arrive one second earlier?”',
-    'Boost discipline rule: stay above 35 when possible via small pads.'
-  ],
-  'Mechanics / Advanced Plays': [
-    'Choose only one advanced mechanic for 2 weeks (air dribble OR flip reset OR double tap).',
-    '60/40 split: 60% fundamental touches, 40% advanced reps to protect ranked consistency.',
-    'Graduation check: hit mechanic successfully 7/10 in controlled setup before ranked attempts.'
-  ],
-  'Positioning / Rotations': [
-    'Auto-check each goal against: were you first man, second man, or third man?',
-    'Third-man commandment: no commit if both teammates are ahead of ball.',
-    'Shadow defend earlier; challenge later to force low-percentage touches.'
-  ],
-  'Decision-Making Under Pressure': [
-    'Use 2-second scan rule: ball, nearest opponent, nearest teammate, boost map.',
-    'In pressure moments, choose 1 of 3 safe options: clear side, controlled dribble, soft pass back.',
-    'Clip every panic touch and re-label the best alternative after session.'
-  ],
-  'Mental / Tilt / Confidence': [
-    'Queue in blocks of 3 games max, then review before next set.',
-    'After every loss: one sentence objective mistake, one sentence immediate fix.',
-    'If tilted, switch to training for 20 mins before re-queueing ranked.'
-  ]
-};
-
-const playlistFocus = {
-  '1v1 Duel': [
-    'Prioritize shadow defense, kickoff consistency, and boost starving routes.',
-    'Track conceded goals from overcommits. Goal: fewer than 2 per series.',
-    'Drill bounce dribbles and low 50/50s daily.'
-  ],
-  '2v2 Doubles': [
-    'Master second-man spacing and fake challenges to buy teammate time.',
-    'Play diagonal support line; avoid mirroring teammate into same lane.',
-    'Train quick infield passes and immediate recovery after first challenge.'
-  ],
-  '3v3 Standard': [
-    'Respect role discipline: first pressure, second support, third insurance.',
-    'Use back-post defense and avoid double commits above midfield.',
-    'Improve off-ball awareness: check both teammates before every push.'
-  ]
-};
-
-const quickPromptList = [
-  'Break down my replay by rotations (good vs bad).',
-  'Design a 30-minute warm-up before ranked.',
-  'Give me a 2-week plan to fix my kickoffs.',
-  'Tell me what to do when I panic on defense.',
-  'How do I convert more shots in Diamond lobbies?',
-  'Coach my boost pathing like a pro analyst.'
+const mediumRiskPatterns = [
+  /pretend|roleplay/i,
+  /simulate policy bypass/i,
+  /do not follow safety/i,
+  /disable guardrails/i
 ];
 
-function createQuickPrompts() {
-  quickPromptList.forEach((promptText) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'prompt-btn';
-    btn.textContent = promptText;
-    btn.addEventListener('click', () => {
-      output.classList.remove('empty');
-      output.innerHTML = `<strong>Prompt ready:</strong> ${promptText}<br><br>Paste this into your preferred AI chat, then add your replay timestamps and what rank lobby you're facing for sharper coaching.`;
-    });
-    quickPrompts.appendChild(btn);
-  });
-}
+function evaluatePromptRisk(text) {
+  const normalized = text.trim();
+  if (!normalized) {
+    return { score: 0, label: 'No input', signals: ['Add a prompt to analyze.'] };
+  }
 
-function getWeeksToChamp(rank) {
-  const idx = rankOrder.indexOf(rank);
-  const champIdx = rankOrder.indexOf('Champion');
-  if (idx === -1) return 16;
-  if (idx >= champIdx) return 6;
+  const signals = [];
+  let score = 6;
 
-  const gap = champIdx - idx;
-  return Math.max(8, gap * 4);
-}
-
-function buildPlan({ rank, playlist, hours, weakness, replayNotes }) {
-  const weeklyHours = Number(hours);
-  const weeks = getWeeksToChamp(rank);
-
-  const mechanicShare = Math.max(2, Math.round(weeklyHours * 0.35));
-  const reviewShare = Math.max(1, Math.round(weeklyHours * 0.2));
-  const rankedShare = Math.max(2, weeklyHours - mechanicShare - reviewShare);
-
-  const weaknessSteps = weaknessLibrary[weakness] ?? weaknessLibrary['Consistency / Basic Touches'];
-  const modeSteps = playlistFocus[playlist] ?? playlistFocus['2v2 Doubles'];
-
-  const replayAction = replayNotes.trim().length
-    ? `From your notes, start by reviewing: “${replayNotes.slice(0, 180)}${
-        replayNotes.length > 180 ? '...' : ''
-      }”. Tag each mistake as mechanical, rotational, or decision-based.`
-    : 'No replay notes were added. After your next 3 ranked games, clip every conceded goal and annotate your role in the play.';
-
-  return [
-    {
-      title: '1) Weekly Structure',
-      items: [
-        `Estimated path to solid Champ-level consistency: about ${weeks} weeks with disciplined sessions.`,
-        `${mechanicShare}h mechanics + ${reviewShare}h replay analysis + ${rankedShare}h focused ranked blocks each week.`,
-        'Play ranked in 3-game blocks, then do 10-minute review before next block.'
-      ]
-    },
-    {
-      title: '2) Priority Fix: Your Weakness',
-      items: weaknessSteps
-    },
-    {
-      title: `3) ${playlist} Focus`,
-      items: modeSteps
-    },
-    {
-      title: '4) Replay Review SOP (Step-by-Step)',
-      items: [
-        replayAction,
-        'At each conceded goal, pause 5 seconds earlier and ask: What was the first avoidable error?',
-        'Write one replacement action for each error and rehearse that action in free play for 5 reps.',
-        'End each review with one “non-negotiable” habit for the next queue session.'
-      ]
-    },
-    {
-      title: '5) Hard Things Made Simple',
-      items: [
-        'Air dribbles: first master setup touch and controlled takeoff before adding second touch.',
-        'Flip resets: focus on approach angle and first contact quality; do not force reset in ranked until consistent.',
-        'Fast decision making: reduce options to 3 defaults (safe clear, controlled touch, immediate challenge) under pressure.'
-      ]
+  highRiskPatterns.forEach((pattern) => {
+    if (pattern.test(normalized)) {
+      score += 18;
+      signals.push(`High-risk phrase matched: ${pattern}`);
     }
-  ];
+  });
+
+  mediumRiskPatterns.forEach((pattern) => {
+    if (pattern.test(normalized)) {
+      score += 9;
+      signals.push(`Medium-risk phrase matched: ${pattern}`);
+    }
+  });
+
+  if (normalized.length > 350) {
+    score += 6;
+    signals.push('Long prompt may contain obfuscated intent.');
+  }
+
+  if (/\b(base64|hex|unicode)\b/i.test(normalized)) {
+    score += 10;
+    signals.push('Encoding terms detected.');
+  }
+
+  score = Math.min(100, score);
+  const threshold = 65;
+  const label = score >= threshold ? 'Risky prompt' : 'Likely safe';
+
+  if (signals.length === 0) {
+    signals.push('No suspicious patterns detected by local demo rules.');
+  }
+
+  return { score, label, signals, threshold };
 }
 
-function renderPlan(plan) {
-  output.classList.remove('empty');
-  output.innerHTML = '';
+function renderRiskResult(result) {
+  if (!scanResult || !signalList) return;
 
-  plan.forEach((section) => {
-    const block = document.createElement('section');
-    block.className = 'plan-block';
+  scanResult.classList.remove('safe', 'risky', 'neutral');
+  scanResult.classList.add(result.score >= result.threshold ? 'risky' : 'safe');
+  scanResult.textContent = `${result.label} • Score: ${result.score}/100 • Threshold: ${result.threshold}`;
 
-    const title = document.createElement('h3');
-    title.textContent = section.title;
-
-    const list = document.createElement('ul');
-    section.items.forEach((item) => {
-      const li = document.createElement('li');
-      li.textContent = item;
-      list.appendChild(li);
-    });
-
-    block.append(title, list);
-    output.appendChild(block);
+  signalList.innerHTML = '';
+  result.signals.forEach((signal) => {
+    const item = document.createElement('li');
+    item.textContent = signal;
+    signalList.appendChild(item);
   });
 }
 
+if (scanBtn && promptInput) {
+  scanBtn.addEventListener('click', () => {
+    const result = evaluatePromptRisk(promptInput.value);
+    renderRiskResult(result);
+  });
+}
 
-function addChatBubble(role, text) {
-  const bubble = document.createElement('div');
-  bubble.className = `chat-bubble ${role}`;
-  bubble.textContent = text;
-  chatLog.appendChild(bubble);
+const models = [
+  { id: 'gpt-5-3', name: 'GPT-5.3', provider: 'OpenAI', type: 'text', description: 'Top-tier general reasoning and writing model.' },
+  { id: 'gpt-4-1', name: 'GPT-4.1', provider: 'OpenAI', type: 'code', description: 'Stable coding model for production implementation tasks.' },
+  { id: 'grok-3-code-fast', name: 'Grok 3 Code Fast', provider: 'xAI', type: 'code', description: 'Fast coding model for quick fixes and rapid iterations.' },
+  { id: 'claude-opus-4-5', name: 'Claude Opus 4.5', provider: 'Anthropic', type: 'code', description: 'Strong architecture and advanced code reasoning.' },
+  { id: 'claude-sonnet-4', name: 'Claude Sonnet 4', provider: 'Anthropic', type: 'text', description: 'Balanced quality and speed for docs and planning.' },
+  { id: 'gemini-2-5-pro', name: 'Gemini 2.5 Pro', provider: 'Google', type: 'text', description: 'Long context text and analysis workflows.' },
+  { id: 'deepseek-v3', name: 'DeepSeek V3', provider: 'DeepSeek', type: 'code', description: 'Efficient coding assistant for algorithm-heavy work.' },
+  { id: 'llama-3-3-70b', name: 'Llama 3.3 70B', provider: 'Meta', type: 'other', description: 'Open model option for self-hosted flexibility.' },
+  { id: 'mistral-large', name: 'Mistral Large', provider: 'Mistral', type: 'other', description: 'General purpose model with strong multilingual output.' }
+];
+
+const guardrailOptions = [
+  { value: 'standard', label: 'Standard (Recommended)' },
+  { value: 'relaxed', label: 'Relaxed' },
+  { value: 'strict', label: 'Strict' }
+];
+
+const modelGrid = document.getElementById('model-grid');
+const modelPicker = document.getElementById('model-picker');
+const launchButton = document.getElementById('launch-session');
+const launchOutput = document.getElementById('launch-output');
+const customInstructions = document.getElementById('custom-instructions');
+const filterButtons = document.querySelectorAll('.filter-btn');
+const guardrailSelect = document.getElementById('guardrail-level');
+const chatLog = document.getElementById('chat-log');
+const chatInput = document.getElementById('chat-input');
+const sendChatButton = document.getElementById('send-chat');
+
+let activeSessionModelId = '';
+
+function getSavedSettings() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem('modelSettings') || '{}');
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveSettings(settings) {
+  localStorage.setItem('modelSettings', JSON.stringify(settings));
+}
+
+function buildModelCards(filter = 'all') {
+  if (!modelGrid) return;
+
+  modelGrid.innerHTML = '';
+  models
+    .filter((model) => filter === 'all' || model.type === filter)
+    .forEach((model) => {
+      const card = document.createElement('article');
+      card.className = `model-card ${model.type}`;
+      card.innerHTML = `
+        <h3>${model.name}</h3>
+        <small>${model.provider} • ${model.type.toUpperCase()}</small>
+        <p>${model.description}</p>
+      `;
+      modelGrid.appendChild(card);
+    });
+}
+
+function fillModelPicker() {
+  if (!modelPicker) return;
+
+  modelPicker.innerHTML = '<option value="">Select a model</option>';
+  models.forEach((model) => {
+    const option = document.createElement('option');
+    option.value = model.id;
+    option.textContent = `${model.name} (${model.provider})`;
+    modelPicker.appendChild(option);
+  });
+}
+
+function fillGuardrailPicker() {
+  if (!guardrailSelect) return;
+
+  guardrailSelect.innerHTML = '';
+  guardrailOptions.forEach((item) => {
+    const option = document.createElement('option');
+    option.value = item.value;
+    option.textContent = item.label;
+    guardrailSelect.appendChild(option);
+  });
+}
+
+function loadModelConfig(modelId) {
+  if (!modelId || !customInstructions || !guardrailSelect) return;
+
+  const settings = getSavedSettings();
+  const current = settings[modelId] || {};
+  customInstructions.value = current.instructions || '';
+  guardrailSelect.value = current.guardrail || 'standard';
+}
+
+function persistCurrentModelConfig() {
+  if (!modelPicker || !customInstructions || !guardrailSelect) return;
+
+  const modelId = modelPicker.value;
+  if (!modelId) return;
+
+  const settings = getSavedSettings();
+  settings[modelId] = {
+    instructions: customInstructions.value,
+    guardrail: guardrailSelect.value
+  };
+  saveSettings(settings);
+}
+
+function addChatMessage(role, text) {
+  if (!chatLog) return;
+  const message = document.createElement('div');
+  message.className = `chat-message ${role}`;
+  message.textContent = text;
+  chatLog.appendChild(message);
   chatLog.scrollTop = chatLog.scrollHeight;
 }
 
-function detectTopic(prompt) {
-  const lower = prompt.toLowerCase();
-  if (lower.includes('kickoff')) return 'kickoff';
-  if (lower.includes('aerial') || lower.includes('air dribble') || lower.includes('flip reset')) return 'aerial';
-  if (lower.includes('rotate') || lower.includes('rotation') || lower.includes('double commit')) return 'rotation';
-  if (lower.includes('tilt') || lower.includes('mental') || lower.includes('confidence')) return 'mental';
-  if (lower.includes('defend') || lower.includes('shadow')) return 'defense';
-  if (lower.includes('shoot') || lower.includes('shot')) return 'shooting';
-  return 'general';
+function buildModelReply(modelName, prompt, guardrailLevel, instructions) {
+  const styleHint = instructions ? `Custom instructions loaded: ${instructions.slice(0, 120)}.` : 'No custom instructions saved yet.';
+  return `${modelName} (${guardrailLevel}) reply: I got your message -> "${prompt}". ${styleHint}`;
 }
 
-function coachReply(prompt) {
-  const topic = detectTopic(prompt);
-  const map = {
-    kickoff:
-      'Kickoff fix: 1) hit center of ball with stable approach, 2) recover instantly with powerslide, 3) grab nearest pad and decide challenge/support in under 1 second. Run 20 reps before queue.',
-    aerial:
-      'For advanced aerial mechanics: split it into setup touch, takeoff line, and first contact quality. Train each piece for 5 minutes, then combine. In ranked, only attempt when you have boost + last-man safety.',
-    rotation:
-      'Anti-double-commit rule: if you cannot beat both teammate and opponent to the ball, rotate out immediately. Keep one car-length wider spacing and verbally call your role: first, second, or third.',
-    mental:
-      'When tilt starts: play one low-risk game plan for the next 3 minutes (safe clears, back-post, no hero plays). After match, write one controllable mistake and one next-match objective.',
-    defense:
-      'Defense checklist: protect net first, challenge when support exists, and clear to side wall—not middle. Pause replay 3 seconds before each conceded goal and identify the first incorrect position.',
-    shooting:
-      'To score more: aim before jump, strike through center-to-top half for power, and follow your shot only when teammate cover exists. Do 30 controlled shot reps with called targets.',
-    general:
-      'Use this live loop: identify one mistake pattern, run a 10-minute drill for it, then test in a 3-game block. Send me the exact situation and I will break it into simple steps.'
-  };
+if (modelGrid) {
+  buildModelCards('all');
+  fillModelPicker();
+  fillGuardrailPicker();
 
-  return `${map[topic]}\n\nIf you want, ask with your rank + playlist + one replay timestamp and I will tailor it.`;
+  filterButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      filterButtons.forEach((item) => item.classList.remove('active'));
+      button.classList.add('active');
+      buildModelCards(button.dataset.filter || 'all');
+    });
+  });
+
+  if (modelPicker) {
+    modelPicker.addEventListener('change', () => {
+      loadModelConfig(modelPicker.value);
+    });
+  }
+
+  if (customInstructions) {
+    customInstructions.addEventListener('input', persistCurrentModelConfig);
+  }
+
+  if (guardrailSelect) {
+    guardrailSelect.addEventListener('change', persistCurrentModelConfig);
+  }
 }
 
-function seedChat() {
-  addChatBubble(
-    'coach',
-    'Yo! I am your RocketMind live coach. Ask me anything and I will give direct steps to improve fast.'
-  );
+if (launchButton && modelPicker && launchOutput && customInstructions && guardrailSelect) {
+  launchButton.addEventListener('click', () => {
+    const selectedModelId = modelPicker.value;
+    if (!selectedModelId) {
+      launchOutput.classList.remove('safe');
+      launchOutput.classList.add('risky');
+      launchOutput.textContent = 'Choose a model first.';
+      return;
+    }
+
+    persistCurrentModelConfig();
+    activeSessionModelId = selectedModelId;
+
+    const selected = models.find((model) => model.id === selectedModelId);
+    const instructions = customInstructions.value.trim();
+
+    launchOutput.classList.remove('risky');
+    launchOutput.classList.add('safe');
+    launchOutput.textContent = instructions
+      ? `Session launched: ${selected?.name}. Guardrails: ${guardrailSelect.value}. Custom instructions saved.`
+      : `Session launched: ${selected?.name}. Guardrails: ${guardrailSelect.value}.`;
+
+    if (chatLog) {
+      chatLog.innerHTML = '';
+      addChatMessage('assistant', `Connected to ${selected?.name}. You can now chat.`);
+    }
+  });
 }
 
-form.addEventListener('submit', (event) => {
-  event.preventDefault();
+if (sendChatButton && chatInput && modelPicker && guardrailSelect) {
+  sendChatButton.addEventListener('click', () => {
+    const prompt = chatInput.value.trim();
+    if (!prompt) return;
 
-  const payload = {
-    rank: document.getElementById('rank').value,
-    playlist: document.getElementById('playlist').value,
-    hours: document.getElementById('hours').value,
-    weakness: document.getElementById('weakness').value,
-    replayNotes: document.getElementById('replay-notes').value
-  };
+    if (!activeSessionModelId) {
+      addChatMessage('assistant', 'Launch a session first so I know which model to use.');
+      return;
+    }
 
-  const plan = buildPlan(payload);
-  renderPlan(plan);
-});
+    const selected = models.find((model) => model.id === activeSessionModelId);
+    addChatMessage('user', prompt);
 
+    const instructions = customInstructions ? customInstructions.value.trim() : '';
+    const reply = buildModelReply(selected?.name || 'Model', prompt, guardrailSelect.value, instructions);
+    window.setTimeout(() => addChatMessage('assistant', reply), 200);
 
-vopenChatBtn.addEventListener('click', () => {
-  chatPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  chatInput.focus();
-});
-
-chatForm.addEventListener('submit', (event) => {
-  event.preventDefault();
-  const prompt = chatInput.value.trim();
-  if (!prompt) return;
-
-  addChatBubble('user', prompt);
-
-  window.setTimeout(() => {
-    addChatBubble('coach', coachReply(prompt));
-  }, 200);
-
-  chatInput.value = '';
-});
-
-createQuickPrompts();
-seedChat();
-
-createQuickPrompts();
-
+    chatInput.value = '';
+  });
+}
