@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Leil Man | AI Model Hosting</title>
+    <meta name="description" content="Leil Man AI hosting dashboard with model picker, saved custom instructions, and guardrail level controls." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="mesh"></div>
+    <header class="site-header">
+      <a href="index.html" class="logo">LEIL<span>MAN</span></a>
+      <nav>
+        <a href="#model-grid">Models</a>
+        <a href="#builder">Custom Instructions</a>
+        <a href="index.html">Back Home</a>
+      </nav>
+      <span class="badge">AI Hosting</span>
+    </header>
+
+    <main class="hosting-main">
+      <section class="section-card hosting-hero">
+        <h1>Leil Man AI Hosting</h1>
+        <p class="lead">
+          Real model names, per-model saved instructions, and adjustable guardrail level so moderation can be tuned from strict to relaxed.
+        </p>
+        <div class="filter-row" role="group" aria-label="Filter models">
+          <button type="button" class="filter-btn active" data-filter="all">All</button>
+          <button type="button" class="filter-btn" data-filter="code">Coding</button>
+          <button type="button" class="filter-btn" data-filter="text">Text</button>
+        </div>
+      </section>
+
+      <section id="builder" class="section-card builder">
+        <h2>Session Builder</h2>
+        <label for="model-picker">Model</label>
+        <select id="model-picker"></select>
+
+        <label for="guardrail-level">Guardrail level</label>
+        <select id="guardrail-level"></select>
+
+        <label for="custom-instructions">Custom instructions</label>
+        <textarea
+          id="custom-instructions"
+          rows="5"
+          placeholder="Example: Keep answers concise, prioritize production-ready code, include tests."
+        ></textarea>
+
+        <button type="button" id="launch-session" class="primary">Launch Session</button>
+        <p id="launch-output" class="scan-result neutral">Pick a model and click launch.</p>
+      </section>
+
+      <section id="model-grid" class="models-grid"></section>
+    </main>
+
+    <footer>
+      <p>Model selection and custom instructions are saved per model in local browser storage.</p>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
