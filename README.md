@@ -22,3 +22,54 @@ python3 -m http.server 8000
 ```
 
 Then open <http://localhost:8000>.
+
+## Qwen3 Option A scaffold (fine-tune + RAG)
+
+This repo now also includes a starter scaffold for building a prompt/coding assistant on top of `Qwen/Qwen3-8B`:
+
+- Training script: `scripts/train_qlora.py`
+- Dataset validator: `scripts/validate_data.py`
+- RAG index builder: `scripts/build_index.py`
+- Chat app: `scripts/chat_app.py`
+- Seed datasets: `data/train.jsonl`, `data/eval.jsonl`, `data/memory_docs.jsonl`
+
+### Install dependencies
+
+```bash
+pip install -U transformers datasets peft trl bitsandbytes accelerate sentence-transformers faiss-cpu
+```
+
+### Validate data
+
+```bash
+python3 scripts/validate_data.py
+```
+
+### Train (QLoRA)
+
+```bash
+accelerate launch scripts/train_qlora.py \
+  --model_name Qwen/Qwen3-8B \
+  --train_file data/train.jsonl \
+  --eval_file data/eval.jsonl \
+  --output_dir outputs/qwen3_promptcraft_lora
+```
+
+### Build memory index
+
+```bash
+python3 scripts/build_index.py \
+  --input data/memory_docs.jsonl \
+  --index_out outputs/memory.index \
+  --meta_out outputs/memory_meta.json
+```
+
+### Run chat with RAG
+
+```bash
+python3 scripts/chat_app.py \
+  --base_model Qwen/Qwen3-8B \
+  --adapter outputs/qwen3_promptcraft_lora \
+  --index outputs/memory.index \
+  --meta outputs/memory_meta.json
+```

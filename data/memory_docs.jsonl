@@ -1,0 +1,4 @@
+{"title":"Prompt Crescendo Ladder","tags":["prompting","framework"],"text":"Start broad intent, add constraints, add examples, add evaluation criteria, and end with output schema. Ask one clarifying question if required fields are missing."}
+{"title":"Switchblade Debug Loop","tags":["coding","debug"],"text":"For code issues: reproduce -> isolate -> hypothesize -> patch -> test -> summarize tradeoffs. Always provide minimal reproducible fix first."}
+{"title":"Python Reliability Checklist","tags":["python","quality"],"text":"Validate inputs, handle edge cases, keep pure functions where possible, add docstrings, and include at least one runnable test command."}
+{"title":"Lua Performance Notes","tags":["lua","performance"],"text":"Minimize table churn in hot paths, localize frequently used globals, and avoid string concatenation in large loops."}
